@@ -26,25 +26,25 @@ public class PlaceOrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaceOrderService.class);
 
-    
     public ApiResponse<OrderPayload> placeOrder(OrderPayload apiRequest) {
 
         logger.info("Validating reqeust for order no: {}", apiRequest.getOrderNo());
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
 
-        if(Objects.isNull(valError)){
+        if (Objects.isNull(valError)) {
 
             OrderDetailsBo orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
             logger.debug("Order Details BO created for the order no: {}", apiRequest.getOrderNo());
 
             kafkaMessagePublisher.sendOrderDetails(orderDetails);
 
-        }else{
+        } else {
             logger.error("There is some unhandled error in Validation for order {}" +
-                        "Please reach out to support !",apiRequest.getOrderNo());
+                    "Please reach out to support !", apiRequest.getOrderNo());
             throw new RuntimeException("There is some unhandled error in Validation");
         }
 
+        // Just checking Jenkins Webhook
         return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
     }
 
