@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.foodDelivery.orderService.exception.UserNotFoundException;
 import com.foodDelivery.orderService.external.generic.ErrorDetails;
 
 
@@ -32,6 +33,15 @@ public class ApplicationExceptionHandler {
     public ErrorDetails handleNotReadable(HttpMessageNotReadableException exception){
         
         return new ErrorDetails(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
+    }
+    
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(UserNotFoundException.class)
+    public ErrorDetails handleUserNotFound(UserNotFoundException exception){
+        
+        return new ErrorDetails(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+
     }
     
 }
