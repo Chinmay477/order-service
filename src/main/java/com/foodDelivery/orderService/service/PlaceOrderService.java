@@ -32,6 +32,7 @@ public class PlaceOrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaceOrderService.class);
 
+    
     public ApiResponse<OrderPayload> placeOrder(OrderPayload apiRequest) {
 
         logger.info("Validating reqeust for order no: {}", apiRequest.getOrderNo());
@@ -53,11 +54,8 @@ public class PlaceOrderService {
                 throw new RuntimeException("There is some unhandled error in Validation");
             }
 
-            // Just checking Jenkins Webhook again
-            return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
-        }
-        else
-            throw new UserNotFoundException("User with ID " + apiRequest.getUserId() + " not found!");
-    }  
-     
+        // Just checking Jenkins Webhook
+        return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
+    }
+
 }
