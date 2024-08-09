@@ -54,8 +54,10 @@ public class PlaceOrderService {
                 throw new RuntimeException("There is some unhandled error in Validation");
             }
 
-        // Just checking Jenkins Webhook
-        return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
+            return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
+        }
+        else{
+            throw new UserNotFoundException("User with ID " + apiRequest.getUserId() + " not found!");
+        }
     }
-
 }
