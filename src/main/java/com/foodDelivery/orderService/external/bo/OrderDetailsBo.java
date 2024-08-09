@@ -6,6 +6,7 @@ import java.util.List;
 import com.foodDelivery.orderService.external.request.Address;
 import com.foodDelivery.orderService.external.request.OrderStatus;
 import com.foodDelivery.orderService.external.request.PaymentMethod;
+import com.foodDelivery.orderService.external.request.UserDetails;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @Setter
 public class OrderDetailsBo {
 
-    private Long userId;
+    private UserDetails user;
     private List<String> itemIds;
     private String orderNo;
     private OrderStatus status;

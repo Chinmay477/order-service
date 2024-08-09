@@ -19,7 +19,7 @@ import lombok.Setter;
 public class OrderPayload {
 
     private String useCaseName;
-    private String userId;
+    private UserDetails user;
     
     @NotBlank(message = "Order number must not be blank")
     @Size(min = 6, message = "Order number must be at least 6 characters long")

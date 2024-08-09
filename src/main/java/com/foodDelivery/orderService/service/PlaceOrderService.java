@@ -14,8 +14,8 @@ import com.foodDelivery.orderService.external.bo.OrderDetailsBo;
 import com.foodDelivery.orderService.external.generic.ApiResponse;
 import com.foodDelivery.orderService.external.request.OrderPayload;
 import com.foodDelivery.orderService.internal.adapters.OrderDetailsMapper;
-import com.foodDelivery.orderService.repository.UserRepository;
 import com.foodDelivery.orderService.service.validation.OrderValidator;
+import com.foodDelivery.orderService.service.validation.ValidUserValidation;
 
 @Service
 public class PlaceOrderService {
@@ -27,7 +27,7 @@ public class PlaceOrderService {
     KafkaMessagePublisher kafkaMessagePublisher;
 
     @Autowired
-    UserRepository userRepository;
+    ValidUserValidation userValidation;
 
 
     private static final Logger logger = LoggerFactory.getLogger(PlaceOrderService.class);
@@ -38,7 +38,8 @@ public class PlaceOrderService {
         logger.info("Validating reqeust for order no: {}", apiRequest.getOrderNo());
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
 
-        Boolean isValidUser = userRepository.existsById(Integer.valueOf(apiRequest.getUserId()));
+        Boolean isValidUser = userValidation.validateUser(apiRequest);
+        logger.info("User {} is valid : {}",apiRequest.getUser().getUserID(),isValidUser);
         
         if(isValidUser){
             if (Objects.isNull(valError)) {
@@ -57,7 +58,7 @@ public class PlaceOrderService {
             return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
         }
         else{
-            throw new UserNotFoundException("User with ID " + apiRequest.getUserId() + " not found!");
+            throw new UserNotFoundException("User with ID " + apiRequest.getUser().getUserID() + " not found!");
         }
     }
 }

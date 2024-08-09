@@ -14,7 +14,7 @@ public interface OrderDetailsMapper {
     OrderDetailsMapper INSTANCE = Mappers.getMapper(OrderDetailsMapper.class);
 
     @Mappings({
-            @Mapping(source = "userId", target = "userId", numberFormat = "#"),
+            @Mapping(source = "user", target = "user"),
             @Mapping(source = "itemIds", target = "itemIds"),
             @Mapping(source="orderNo",target="orderNo"),
             @Mapping(source = "status", target = "status"),
