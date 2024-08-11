@@ -38,13 +38,14 @@ public class PlaceOrderService {
         logger.info("Validating reqeust for order no: {}", apiRequest.getOrderNo());
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
 
-        Boolean isValidUser = userValidation.validateUser(apiRequest);
-        logger.info("User {} is valid : {}",apiRequest.getUser().getUserID(),isValidUser);
+        OrderDetailsBo orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
+
+        Boolean isValidUser = userValidation.validateUser(orderDetails.getUser());
+        logger.info("User {} is valid : {}",orderDetails.getUser().getUserID(),isValidUser);
         
         if(isValidUser){
             if (Objects.isNull(valError)) {
 
-                OrderDetailsBo orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
                 logger.debug("Order Details BO created for the order no: {}", apiRequest.getOrderNo());
 
                 kafkaMessagePublisher.sendOrderDetails(orderDetails);
@@ -57,8 +58,10 @@ public class PlaceOrderService {
 
             return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
         }
+
         else{
-            throw new UserNotFoundException("User with ID " + apiRequest.getUser().getUserID() + " not found!");
+            logger.error("No user with User ID {} found !",orderDetails.getUser().getUserID());
+            throw new UserNotFoundException("User with ID " + orderDetails.getUser().getUserID() + " not found!");
         }
     }
 }

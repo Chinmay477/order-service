@@ -5,8 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.foodDelivery.orderService.exception.UserNotFoundException;
-import com.foodDelivery.orderService.external.request.OrderPayload;
+import com.foodDelivery.orderService.external.request.UserDetails;
 import com.foodDelivery.orderService.internal.entity.User;
 import com.foodDelivery.orderService.repository.UserRepository;
 
@@ -17,25 +16,21 @@ public class ValidUserValidation {
     UserRepository userRepository;
 
 
-    public Boolean validateUser(OrderPayload request){
+    public Boolean validateUser(UserDetails inUser){
 
 
-        Optional<User> fetchedUser = userRepository.findById(Integer.valueOf(request.getUser().getUserID()));
+        Optional<User> fetchedUser = userRepository.findById(Integer.valueOf(inUser.getUserID()));
 
 
         if (fetchedUser.isEmpty()) {
-            throw new UserNotFoundException("User with ID " + request.getUser().getUserID() + " not found!");
+            return false;
         }
 
         User user = fetchedUser.get();
 
-        boolean isValid = user.getUsername().equals(request.getUser().getUsername()) 
-        && user.getFirstName().equals(request.getUser().getFirstName())
-        && user.getLastName().equals(request.getUser().getLastName());
-
-        if (!isValid) {
-            throw new UserNotFoundException("Incorrect Details for user with ID " + request.getUser().getUserID());
-        }
+        boolean isValid = user.getUsername().equals(inUser.getUsername()) 
+        && user.getFirstName().equals(inUser.getFirstName())
+        && user.getLastName().equals(inUser.getLastName());
     
         return isValid;
     }
