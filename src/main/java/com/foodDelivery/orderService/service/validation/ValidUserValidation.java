@@ -1,36 +1,38 @@
 package com.foodDelivery.orderService.service.validation;
 
-import java.util.Optional;
+import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.foodDelivery.orderService.external.request.UserDetails;
 import com.foodDelivery.orderService.internal.entity.User;
-import com.foodDelivery.orderService.repository.UserRepository;
+import com.foodDelivery.orderService.service.internal.UserService;
 
-@Component
+@Service
 public class ValidUserValidation {
 
     @Autowired
-    UserRepository userRepository;
+    UserService userService;
 
+    private static final Logger logger = LoggerFactory.getLogger(ValidUserValidation.class);
 
     public Boolean validateUser(UserDetails inUser){
+        
+        logger.debug("Fetching for User ID {}",inUser.getUserID());
+        User fetchedUser = userService.getUserById(Integer.valueOf(inUser.getUserID()));
 
-
-        Optional<User> fetchedUser = userRepository.findById(Integer.valueOf(inUser.getUserID()));
-
-
-        if (fetchedUser.isEmpty()) {
+        if (Objects.isNull(fetchedUser)) {
+            logger.warn("No user found for User ID {}",inUser.getUserID());
             return false;
         }
 
-        User user = fetchedUser.get();
-
-        boolean isValid = user.getUsername().equals(inUser.getUsername()) 
-        && user.getFirstName().equals(inUser.getFirstName())
-        && user.getLastName().equals(inUser.getLastName());
+        boolean isValid = fetchedUser.getUsername().equals(inUser.getUsername()) 
+        && fetchedUser.getFirstName().equals(inUser.getFirstName())
+        && fetchedUser.getLastName().equals(inUser.getLastName());
+        logger.info("User validation for User ID {} is {}",inUser.getUserID(), isValid);
     
         return isValid;
     }
