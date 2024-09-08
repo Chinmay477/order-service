@@ -18,19 +18,31 @@ public class OrderValidator {
         public ResponseEntity<String> validateOrderPayload(OrderPayload orderPayload) {
 
             if (!OrderStatus.isValid(orderPayload.getStatus().toString())) {
-                logger.error("Invalid status value: ",orderPayload.getStatus());
+                logger.error("Invalid status value: {}",orderPayload.getStatus());
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body("Invalid status value: " + orderPayload.getStatus());
             }
 
+            if (orderPayload.getUseCaseName().equalsIgnoreCase("PLACE_ORDER") &&
+                    !orderPayload.getStatus().toString().equalsIgnoreCase(OrderStatus.NEW_ORDER.name())){
+
+                logger.error("Invalid status: {} for placing new order {}. For new order status should be {}"
+                        ,orderPayload.getStatus(),orderPayload.getOrderNo(),OrderStatus.NEW_ORDER.name());
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body("Invalid status: {} " + orderPayload.getStatus() + " for placing new order "
+                                + orderPayload.getOrderNo());
+            }
+
             if (!PaymentMethod.isValid(orderPayload.getPaymentMethod().toString())) {
-                logger.error("Invalid payment method value: ",orderPayload.getPaymentMethod());
+                logger.error("Invalid payment method value: {}",orderPayload.getPaymentMethod());
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body("Invalid payment method value: " + orderPayload.getPaymentMethod());
             }
-            
+
+
             logger.info("Request is valid for order: {}",orderPayload.getOrderNo());
             return null;
         }

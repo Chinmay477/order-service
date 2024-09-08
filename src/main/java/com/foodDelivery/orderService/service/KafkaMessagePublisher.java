@@ -22,7 +22,7 @@ public class KafkaMessagePublisher {
 
     public void sendOrderDetails(OrderDetailsBo orderDetails) {
 
-            logger.info("Publishing order details for order no: ", orderDetails.getOrderNo());
+            logger.info("Publishing order details for order no: {}", orderDetails.getOrderNo());
 
             CompletableFuture<SendResult<String, Object>> future = 
                 kafkaTemplate.send(OrdersConstants.ORDER_DETAILS_TOPIC,orderDetails);
@@ -33,7 +33,7 @@ public class KafkaMessagePublisher {
                         result.getRecordMetadata().offset() + "]");
                 } 
                 else {
-                    logger.error("Unable to publsh order details =[" + orderDetails + "] due to : " + ex.getMessage());
+                    logger.error("Unable to publish order details =[" + orderDetails + "] due to : " + ex.getMessage());
                     throw new RuntimeException("Unable to publish Order Details for order: "+orderDetails.getOrderNo(),ex);
                 }
             });

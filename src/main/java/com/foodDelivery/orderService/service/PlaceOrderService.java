@@ -35,15 +35,17 @@ public class PlaceOrderService {
     
     public ApiResponse<OrderPayload> placeOrder(OrderPayload apiRequest) {
 
-        logger.info("Validating reqeust for order no: {}", apiRequest.getOrderNo());
+        logger.info("Validating request for order no: {}", apiRequest.getOrderNo());
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
 
         OrderDetailsBo orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
 
         Boolean isValidUser = userValidation.validateUser(orderDetails.getUser());
         logger.info("User {} is valid : {}",orderDetails.getUser().getUserID(),isValidUser);
+
+        //TODO: Restaurant and Inventory Check
         
-        if(isValidUser){
+        if(Boolean.TRUE.equals(isValidUser)){
             if (Objects.isNull(valError)) {
 
                 logger.debug("Order Details BO created for the order no: {}", apiRequest.getOrderNo());
@@ -58,7 +60,6 @@ public class PlaceOrderService {
 
             return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
         }
-
         else{
             logger.error("No user with User ID {} found !",orderDetails.getUser().getUserID());
             throw new UserNotFoundException("User with ID " + orderDetails.getUser().getUserID() + " not found!");
