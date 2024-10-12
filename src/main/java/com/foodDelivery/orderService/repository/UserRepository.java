@@ -8,6 +8,4 @@ import com.foodDelivery.orderService.internal.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer>{
 
-    
-
 }

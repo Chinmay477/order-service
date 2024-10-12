@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.foodDelivery.orderService.external.request.UserDetails;
 import com.foodDelivery.orderService.internal.entity.User;
 import com.foodDelivery.orderService.service.internal.UserService;
 
@@ -19,22 +18,17 @@ public class ValidUserValidation {
 
     private static final Logger logger = LoggerFactory.getLogger(ValidUserValidation.class);
 
-    public Boolean validateUser(UserDetails inUser){
+    public Boolean validateUser(Integer inUser){
         
-        logger.debug("Fetching for User ID {}",inUser.getUserID());
-        User fetchedUser = userService.getUserById(Integer.valueOf(inUser.getUserID()));
+        logger.debug("Fetching for User ID {}",inUser);
+        User fetchedUser = userService.getUserById(inUser);
 
-        if (Objects.isNull(fetchedUser)) {
-            logger.warn("No user found for User ID {}",inUser.getUserID());
-            return false;
+        if (Objects.nonNull(fetchedUser)) {
+            return true;
         }
 
-        boolean isValid = fetchedUser.getUsername().equals(inUser.getUsername()) 
-        && fetchedUser.getFirstName().equals(inUser.getFirstName())
-        && fetchedUser.getLastName().equals(inUser.getLastName());
-        logger.info("User validation for User ID {} is {}",inUser.getUserID(), isValid);
-    
-        return isValid;
+        logger.error("No user found for User ID {}",inUser);
+        return false;
     }
 
 }

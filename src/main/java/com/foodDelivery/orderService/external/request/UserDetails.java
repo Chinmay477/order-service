@@ -14,6 +14,4 @@ import lombok.Setter;
 public class UserDetails {
     private String userID;
     private String username;
-    private String firstName;
-    private String lastName;
 }

@@ -1,5 +1,6 @@
 package com.foodDelivery.orderService.internal.entity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ import jakarta.persistence.Table;
 @Table(name = "USERS")
 public class User implements Serializable{
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id

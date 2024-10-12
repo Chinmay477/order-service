@@ -18,28 +18,34 @@ import lombok.Setter;
 @Setter
 public class OrderPayload {
 
+    @NotBlank(message = "useCaseName must not be blank")
     private String useCaseName;
-    private UserDetails user;
+
+    @NotBlank(message = "User ID must not be blank")
+    private String userId;
     
     @NotBlank(message = "Order number must not be blank")
     @Size(min = 6, message = "Order number must be at least 6 characters long")
     private String orderNo;
 
-    private List<String> itemIds;
     private OrderStatus status;
 
-    @DecimalMin(value = "0.01", inclusive = true, message = "Total price must be greater than 0")
-    private String totalPrice;
-
-    private Address deliveryAddress;
     private String restaurantName;
-    private String orderPlaceTime;
+
+    private String restaurantId;
+
+    @DecimalMin(value = "0.01", message = "Total price must be greater than 0")
+    private double totalPrice;
+
+    private List<OrderItem> items;
+
     private PaymentMethod paymentMethod;
 
-    private String deliveryTimeETA;
-    
+    private DeliveryInfo deliveryInfo;
+
     @Size(min = 10, max = 10, message = "Contact number must be exactly 10 characters long")
     private String contactNumber;
+
     private String specialInstructions;
 
 }
