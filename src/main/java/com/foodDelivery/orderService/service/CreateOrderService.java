@@ -3,8 +3,11 @@ package com.foodDelivery.orderService.service;
 import com.foodDelivery.orderService.exception.UserNotFoundException;
 import com.foodDelivery.orderService.external.bo.OrderDetailsBo;
 import com.foodDelivery.orderService.external.generic.ApiResponse;
+import com.foodDelivery.orderService.external.request.OrderItem;
 import com.foodDelivery.orderService.external.request.OrderPayload;
 import com.foodDelivery.orderService.internal.adapters.OrderDetailsMapper;
+import com.foodDelivery.orderService.internal.adapters.OrderItemsMapper;
+import com.foodDelivery.orderService.internal.entity.OrderItemsT;
 import com.foodDelivery.orderService.internal.entity.OrdersT;
 import com.foodDelivery.orderService.service.internal.OrderPersistenceService;
 import com.foodDelivery.orderService.service.validation.OrderValidator;
@@ -16,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -35,10 +40,19 @@ public class CreateOrderService {
     
     public ApiResponse<OrderPayload> createOrder(OrderPayload apiRequest) {
 
+        List<OrderItemsT> orderItemsDetail = new ArrayList<>();
+
         logger.info("Validating request for order no: {}", apiRequest.getOrderNo());
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
 
         OrdersT orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
+        for (OrderItem orderItem : apiRequest.getItems()) {
+            OrderItemsT orderItemsT = OrderItemsMapper.INSTANCE.toOrderLinesBo(
+                    orderItem,apiRequest.getOrderNo(),
+                    String.valueOf(apiRequest.getStatus())
+            );
+            orderItemsDetail.add(orderItemsT);
+        }
 
         Boolean isValidUser = userValidation.validateUser(orderDetails.getUserId());
         logger.info("User {} is valid : {}", orderDetails.getUserId(), isValidUser);
@@ -47,7 +61,7 @@ public class CreateOrderService {
             if (Objects.isNull(valError)) {
 
                 orderPersistence.saveOrder(orderDetails);
-
+                orderPersistence.saveOrderItems(orderItemsDetail);
                 //logger.debug("Order Details BO created for the order no: {}", apiRequest.getOrderNo());
 
                 //kafkaMessagePublisher.sendOrderDetails(orderDetails);
