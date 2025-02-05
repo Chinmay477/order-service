@@ -25,7 +25,7 @@ public class OrdersT {
     private String restaurantName;
 
     @Column(name = "restaurant_id", nullable = false)
-    private Integer restaurantId;
+    private String restaurantId;
 
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
@@ -84,11 +84,11 @@ public class OrdersT {
         this.restaurantName = restaurantName;
     }
 
-    public Integer getRestaurantId() {
+    public String getRestaurantId() {
         return restaurantId;
     }
 
-    public void setRestaurantId(Integer restaurantId) {
+    public void setRestaurantId(String restaurantId) {
         this.restaurantId = restaurantId;
     }
 

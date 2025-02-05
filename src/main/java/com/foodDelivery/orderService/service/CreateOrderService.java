@@ -1,7 +1,6 @@
 package com.foodDelivery.orderService.service;
 
 import com.foodDelivery.orderService.exception.UserNotFoundException;
-import com.foodDelivery.orderService.external.bo.OrderDetailsBo;
 import com.foodDelivery.orderService.external.generic.ApiResponse;
 import com.foodDelivery.orderService.external.request.OrderItem;
 import com.foodDelivery.orderService.external.request.OrderPayload;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class CreateOrderService {
@@ -37,46 +35,123 @@ public class CreateOrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(CreateOrderService.class);
 
-    
+    /**
+     *
+     * @param apiRequest
+     * @return
+     */
     public ApiResponse<OrderPayload> createOrder(OrderPayload apiRequest) {
 
-        List<OrderItemsT> orderItemsDetail = new ArrayList<>();
+        String orderNo = apiRequest.getOrderNo();
+        Integer userId = Integer.valueOf(apiRequest.getUserId());
+
+        logger.info("Processing order creation request for order no: {}", orderNo);
 
         logger.info("Validating request for order no: {}", apiRequest.getOrderNo());
-        ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
+        validateOrderPayload(apiRequest);
+
+        logger.info("Validating user {}", userId);
+        validateUser(userId);
 
         OrdersT orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
-        for (OrderItem orderItem : apiRequest.getItems()) {
-            OrderItemsT orderItemsT = OrderItemsMapper.INSTANCE.toOrderLinesBo(
-                    orderItem,apiRequest.getOrderNo(),
-                    String.valueOf(apiRequest.getStatus())
+        List<OrderItemsT> orderItemsDetail = buildOrderItems(apiRequest);
+
+        try {
+            saveOrder(orderDetails, orderItemsDetail);
+            publishOrderEvent(orderDetails);
+
+            logger.info("Successfully created order: {}", orderNo);
+            return new ApiResponse<>(
+                    HttpStatus.OK,
+                    apiRequest,
+                    "Order placed successfully"
             );
-            orderItemsDetail.add(orderItemsT);
+        } catch (Exception e) {
+            logger.error("Failed to create order: {}", orderNo, e);
+            throw new RuntimeException("Failed to create order: " + orderNo, e);
         }
 
-        Boolean isValidUser = userValidation.validateUser(orderDetails.getUserId());
-        logger.info("User {} is valid : {}", orderDetails.getUserId(), isValidUser);
+    }
 
-        if (Boolean.TRUE.equals(isValidUser)) {
-            if (Objects.isNull(valError)) {
-
-                orderPersistence.saveOrder(orderDetails);
-                orderPersistence.saveOrderItems(orderItemsDetail);
-                //logger.debug("Order Details BO created for the order no: {}", apiRequest.getOrderNo());
-
-                //kafkaMessagePublisher.sendOrderDetails(orderDetails);
-
-            } else {
-                logger.error("There is some unhandled error in Validation for order {}" +
-                            "Please reach out to support !", apiRequest.getOrderNo());
-                throw new RuntimeException("There is some unhandled error in Validation");
-            }
-
-            return new ApiResponse<>(HttpStatus.OK, null, "Order placed successfully");
-        } else {
-            logger.error("No user with User ID {} found !", orderDetails.getUserId());
-            throw new UserNotFoundException("User with ID " + orderDetails.getUserId() + " not found!");
+    /**
+     *
+     * @param apiRequest
+     */
+    private void validateOrderPayload(OrderPayload apiRequest) {
+        ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
+        if (valError!=null && valError.getStatusCode() == HttpStatus.BAD_REQUEST) {
+            logger.error("Validation failed for order: {}", apiRequest.getOrderNo());
+            throw new RuntimeException("Order validation failed");
         }
     }
 
+    /**
+     *
+     * @param userId
+     */
+    private void validateUser(Integer userId) {
+        Boolean isValidUser = userValidation.validateUser(userId);
+        logger.info("User {} is valid: {}", userId, isValidUser);
+        if (!Boolean.TRUE.equals(isValidUser)) {
+            logger.error("No user with User ID {} found!", userId);
+            throw new UserNotFoundException("User with ID " + userId + " not found!");
+        }
+    }
+
+    /**
+     *
+     * @param apiRequest
+     * @return
+     */
+    private List<OrderItemsT> buildOrderItems(OrderPayload apiRequest) {
+        List<OrderItemsT> orderItemsDetail = new ArrayList<>();
+        for (OrderItem orderItem : apiRequest.getItems()) {
+            try{
+                OrderItemsT lineItem = OrderItemsMapper.INSTANCE.toOrderLinesBo(
+                        orderItem,
+                        apiRequest.getOrderNo(),
+                        String.valueOf(apiRequest.getStatus())
+                );
+                orderItemsDetail.add(lineItem);
+            }catch (Exception e){
+                logger.error("Failed to map order item {} for order {}",
+                        orderItem.getItemId(), apiRequest.getOrderNo(), e);
+                throw new RuntimeException("Failed to process order item", e);
+            }
+        }
+        return orderItemsDetail;
+    }
+
+    /**
+     *
+     * @param orderDetails
+     * @param orderItemsDetail
+     */
+    private void saveOrder(OrdersT orderDetails, List<OrderItemsT> orderItemsDetail) {
+        try {
+            orderPersistence.saveOrder(orderDetails);
+            orderPersistence.saveOrderItems(orderItemsDetail);
+            logger.info("Successfully persisted order {} with {} items",
+                    orderDetails.getOrderId(), orderItemsDetail.size());
+        } catch (Exception e) {
+            logger.error("Failed to persist order {}", orderDetails.getOrderId(), e);
+            throw new RuntimeException("Failed to save order", e);
+        }
+    }
+
+    /**
+     *
+     * @param orderDetails
+     */
+    private void publishOrderEvent(OrdersT orderDetails) {
+        try {
+            //kafkaMessagePublisher.sendOrderDetails(orderDetails);
+            logger.info("Successfully published order event for order {}",
+                    orderDetails.getOrderId());
+        } catch (Exception e) {
+            logger.error("Failed to publish order event for order {}",
+                    orderDetails.getOrderId(), e);
+            throw new RuntimeException("Failed to publish order event", e);
+        }
+    }
 }
