@@ -1,7 +1,6 @@
 package com.foodDelivery.orderService.service;
 
 import com.foodDelivery.orderService.exception.UserNotFoundException;
-import com.foodDelivery.orderService.external.generic.ApiResponse;
 import com.foodDelivery.orderService.external.request.OrderItem;
 import com.foodDelivery.orderService.external.request.OrderPayload;
 import com.foodDelivery.orderService.internal.adapters.OrderDetailsMapper;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,45 +40,20 @@ public class CreateOrderService {
      * @param apiRequest
      * @return
      */
-    public ApiResponse<OrderPayload> createOrder(OrderPayload apiRequest) {
+    public OrdersT createOrderDetails(OrderPayload apiRequest) {
 
-        String orderNo = apiRequest.getOrderNo();
-        Integer userId = Integer.valueOf(apiRequest.getUserId());
-
-        logger.info("Processing order creation request for order no: {}", orderNo);
-
-        logger.info("Validating request for order no: {}", apiRequest.getOrderNo());
-        validateOrderPayload(apiRequest);
-
-        logger.info("Validating user {}", userId);
-        validateUser(userId);
-
-        OrdersT orderDetails = OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
-        List<OrderItemsT> orderItemsDetail = buildOrderItems(apiRequest);
-
-        try {
-            saveOrder(orderDetails, orderItemsDetail);
-            publishOrderEvent(orderDetails);
-
-            logger.info("Successfully created order: {}", orderNo);
-            return new ApiResponse<>(
-                    HttpStatus.OK,
-                    apiRequest,
-                    "Order placed successfully"
-            );
-        } catch (Exception e) {
-            logger.error("Failed to create order: {}", orderNo, e);
-            throw new RuntimeException("Failed to create order: " + orderNo, e);
-        }
-
+        return OrderDetailsMapper.INSTANCE.toOrderDetailsBo(apiRequest);
     }
+
 
     /**
      *
      * @param apiRequest
      */
-    private void validateOrderPayload(OrderPayload apiRequest) {
+    public void validateOrderPayload(OrderPayload apiRequest) {
+
         ResponseEntity<String> valError = orderValidator.validateOrderPayload(apiRequest);
+
         if (valError!=null && valError.getStatusCode() == HttpStatus.BAD_REQUEST) {
             logger.error("Validation failed for order: {}", apiRequest.getOrderNo());
             throw new RuntimeException("Order validation failed");
@@ -89,8 +64,10 @@ public class CreateOrderService {
      *
      * @param userId
      */
-    private void validateUser(Integer userId) {
+    public void validateUser(Integer userId) {
+
         Boolean isValidUser = userValidation.validateUser(userId);
+
         logger.info("User {} is valid: {}", userId, isValidUser);
         if (!Boolean.TRUE.equals(isValidUser)) {
             logger.error("No user with User ID {} found!", userId);
@@ -103,8 +80,10 @@ public class CreateOrderService {
      * @param apiRequest
      * @return
      */
-    private List<OrderItemsT> buildOrderItems(OrderPayload apiRequest) {
+    public List<OrderItemsT> buildOrderItems(OrderPayload apiRequest) {
+
         List<OrderItemsT> orderItemsDetail = new ArrayList<>();
+
         for (OrderItem orderItem : apiRequest.getItems()) {
             try{
                 OrderItemsT lineItem = OrderItemsMapper.INSTANCE.toOrderLinesBo(
@@ -127,7 +106,9 @@ public class CreateOrderService {
      * @param orderDetails
      * @param orderItemsDetail
      */
-    private void saveOrder(OrdersT orderDetails, List<OrderItemsT> orderItemsDetail) {
+    @Transactional
+    public void saveOrder(OrdersT orderDetails, List<OrderItemsT> orderItemsDetail) {
+
         try {
             orderPersistence.saveOrder(orderDetails);
             orderPersistence.saveOrderItems(orderItemsDetail);
@@ -143,7 +124,8 @@ public class CreateOrderService {
      *
      * @param orderDetails
      */
-    private void publishOrderEvent(OrdersT orderDetails) {
+    public void publishOrderEvent(OrdersT orderDetails) {
+
         try {
             //kafkaMessagePublisher.sendOrderDetails(orderDetails);
             logger.info("Successfully published order event for order {}",
