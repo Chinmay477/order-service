@@ -1,0 +1,20 @@
+name: CI Example
+
+on: [push]
+
+jobs:
+  java-build:
+    name: Building Java Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+
+      - name: Build using Maven
+        run: mvn clean install
