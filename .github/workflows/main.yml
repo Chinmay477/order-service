@@ -1,6 +1,10 @@
 name: CI Example
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   java-build:
@@ -17,4 +21,5 @@ jobs:
           java-version: '17'
 
       - name: Build using Maven
-        run: mvn clean install
+        run: |
+          ./mvn clean install
